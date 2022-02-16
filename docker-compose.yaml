@@ -5,7 +5,6 @@ services:
         container_name: ${PROJECT}-webserver
         restart: unless-stopped
         ports:
-            - "3000:3000"
             - "80:80"
             - "443:443"
         environment: 
@@ -21,6 +20,8 @@ services:
         command: ./src/scripts/run_nginx.sh
         networks:
             - app-network
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
     certbot:
         image: certbot/certbot
         container_name: ${PROJECT}-certbot
