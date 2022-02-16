@@ -7,6 +7,7 @@
 node_modules/
 dist/
 .env
+relay-config.json
 # Compiled Java class files
 *.class
 

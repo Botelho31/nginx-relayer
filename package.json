@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/Botelho31/botelho-server-nginx#readme",
   "dependencies": {
+    "dotenv": "^16.0.0",
     "ts-node": "^10.5.0"
   },
   "devDependencies": {
