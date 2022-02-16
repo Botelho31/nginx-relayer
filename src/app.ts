@@ -14,10 +14,10 @@ function createDir(relativePath: string) {
   }
 }
 
-function addHttpServer(serverName: String, relay: String, acmeChallenge: boolean, httpsPass: boolean) : String {
+function addHttpServer(serverName: String, relay: String, certificate: boolean, httpsPass: boolean) : String {
   let httpText = fs.readFileSync(path.join(__dirname, 'nginx-conf/http.txt'), 'utf8')
   httpText += `\nserver_name ${serverName};\n`
-  if (acmeChallenge) {
+  if (certificate) {
     const acmeText = fs.readFileSync(path.join(__dirname, 'nginx-conf/acme-challenge.txt'), 'utf8')
     httpText += acmeText
   }
@@ -62,16 +62,18 @@ function main() {
   let nginxConf = ""
   const relays = serverConfig.relays
   for(let i = 0;i < relays.length; i+= 1) {
-    nginxConf += addHttpServer(relays[i].serverName , relays[i].relay, relays[i].acmeChallenge, relays[i].httpsPass)
-    greenlock.getCertificate(relays[i].serverName)
+    nginxConf += addHttpServer(relays[i].serverName , relays[i].relay, relays[i].https, relays[i].forceHttps)
     if (relays[i].https) {
-      nginxConf += addHttpsServer(relays[i].serverName, relays[i].relay)
-      createDir('../build/dhparam/')
-      const dhparamPath = path.join(__dirname, '../build/dhparam/dhparam-2048.pem')
-      if (!fs.existsSync(dhparamPath)) {
-        fs.writeFileSync(dhparamPath, require("dhparam")())
-      }
+      greenlock.getCertificate(relays[i].serverName)
     }
+    // if (relays[i].https) {
+    //   nginxConf += addHttpsServer(relays[i].serverName, relays[i].relay)
+    //   createDir('../build/dhparam/')
+    //   const dhparamPath = path.join(__dirname, '../build/dhparam/dhparam-2048.pem')
+    //   if (!fs.existsSync(dhparamPath)) {
+    //     fs.writeFileSync(dhparamPath, require("dhparam")())
+    //   }
+    // }
   }
   fs.appendFileSync(pathToConfig, nginxConf)
 }
