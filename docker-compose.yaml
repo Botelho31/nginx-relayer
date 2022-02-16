@@ -10,9 +10,8 @@ services:
         volumes:
             - ./build/conf:/etc/nginx/conf.d
             - ./build/dhparam.pem:/etc/ssl/certs
+            - ./build/certificates:/etc/letsencrypt/live
             - /var/www/html:/var/www/html
-            - /etc/letsencrypt:/etc/letsencrypt
-            - /var/lib/letsencrypt:/var/lib/letsencrypt
             - ./:/src
         command:
             - "./src/scripts/run_nginx.sh"
