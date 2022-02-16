@@ -14,7 +14,6 @@ services:
             - /var/www/html:/var/www/html
             - /etc/letsencrypt:/etc/letsencrypt
             - /var/lib/letsencrypt:/var/lib/letsencrypt
-            - certbot-listener:/listener
             - /etc/ssl/certs:/etc/ssl/certs
             - ./:/src
         command: ./src/scripts/run_nginx.sh
@@ -22,24 +21,6 @@ services:
             - app-network
         extra_hosts:
             - "host.docker.internal:host-gateway"
-    certbot:
-        image: certbot/certbot
-        container_name: ${PROJECT}-certbot
-        depends_on: 
-            - webserver
-        environment: 
-            - PROJECT
-            - DOMAIN=${DNS}
-            - EMAIL
-        entrypoint: /scripts/run_certbot.sh
-        volumes:
-            - /var/www/html:/var/www/html
-            - /etc/letsencrypt:/etc/letsencrypt
-            - /var/lib/letsencrypt:/var/lib/letsencrypt
-            - certbot-listener:/listener
-            - ./scripts/:/scripts
-        networks:
-            - app-network
 
 volumes:
     certbot-listener:
