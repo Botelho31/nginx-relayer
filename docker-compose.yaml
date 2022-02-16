@@ -13,8 +13,9 @@ services:
             - /var/www/html:/var/www/html
             - /etc/letsencrypt:/etc/letsencrypt
             - /var/lib/letsencrypt:/var/lib/letsencrypt
+            - ./:/src
         command:
-            - "./scripts/run_nginx.sh"
+            - "./src/scripts/run_nginx.sh"
         extra_hosts:
             - "host.docker.internal:host-gateway"
     
