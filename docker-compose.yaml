@@ -1,0 +1,49 @@
+version: '3'
+services:
+    webserver:
+        image: nginx
+        container_name: ${PROJECT}-webserver
+        restart: unless-stopped
+        ports:
+            - "80:80"
+            - "443:443"
+        environment: 
+            - PROJECT
+            - DOMAIN=${DNS}
+        volumes:
+            - /var/www/html:/var/www/html
+            - /etc/letsencrypt:/etc/letsencrypt
+            - /var/lib/letsencrypt:/var/lib/letsencrypt
+            - certbot-listener:/listener
+            - /etc/ssl/certs:/etc/ssl/certs
+            - ./:/src
+        command: ./src/scripts/run_nginx.sh
+        networks:
+            - app-network
+    certbot:
+        image: certbot/certbot
+        container_name: ${PROJECT}-certbot
+        depends_on: 
+            - webserver
+        environment: 
+            - PROJECT
+            - DOMAIN=${DNS}
+            - EMAIL
+        entrypoint: /scripts/run_certbot.sh
+        volumes:
+            - /var/www/html:/var/www/html
+            - /etc/letsencrypt:/etc/letsencrypt
+            - /var/lib/letsencrypt:/var/lib/letsencrypt
+            - certbot-listener:/listener
+            - ./scripts/:/scripts
+        networks:
+            - app-network
+
+volumes:
+    certbot-listener:
+    
+networks:
+    app-network:
+        driver: bridge
+          
+          
