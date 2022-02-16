@@ -54,7 +54,7 @@ function addHttpsServer(serverName: String, relay: String) : String {
   return httpsText
 }
 
-function main() {
+async function main() {
   createDir('../build')
   createDir('../build/conf')
   fs.openSync(pathToConfig, 'w')
@@ -64,7 +64,8 @@ function main() {
   for(let i = 0;i < relays.length; i+= 1) {
     nginxConf += addHttpServer(relays[i].serverName , relays[i].relay, relays[i].https, relays[i].forceHttps)
     if (relays[i].https) {
-      greenlock.getCertificate(relays[i].serverName)
+      const certificate = await greenlock.getCertificate(relays[i].serverName)
+      console.log(certificate)
     }
     // if (relays[i].https) {
     //   nginxConf += addHttpsServer(relays[i].serverName, relays[i].relay)
