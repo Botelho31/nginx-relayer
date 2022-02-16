@@ -70,10 +70,12 @@ async function main() {
       nginxConf += addHttpsServer(relays[i].serverName, relays[i].relay)
       createDir('../build/dhparam/')
       createDir('../build/certificates/')
-      createDir(`../build/certificates/${relays[i].serverName}`)
-      const certificatePath = path.join(`build/certificates/${relays[i].serverName}`)
-      console.log(`Creating Dummy Certificates for ${relays[i].serverName}`)
-      await execPromise(`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${certificatePath}/privkey.pem -out ${certificatePath}/fullchain.pem -subj "/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project} /OU=IT Department/CN=${relays[i].serverName}"`);
+      if (!fs.existsSync(path.join(`..build/certificates/${relays[i].serverName}`))) {
+        createDir(`../build/certificates/${relays[i].serverName}`)
+        const certificatePath = path.join(`build/certificates/${relays[i].serverName}`)
+        console.log(`Creating Dummy Certificates for ${relays[i].serverName}`)
+        await execPromise(`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${certificatePath}/privkey.pem -out ${certificatePath}/fullchain.pem -subj "/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project} /OU=IT Department/CN=${relays[i].serverName}"`);
+      }
       const dhparamPath = path.join(__dirname, '../build/dhparam/dhparam-2048.pem')
       if (!fs.existsSync(dhparamPath)) {
         fs.writeFileSync(dhparamPath, require("dhparam")())
