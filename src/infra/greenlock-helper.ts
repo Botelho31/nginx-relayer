@@ -16,7 +16,7 @@ export default class GreenlockHelper {
       maintainerEmail: contactEmail,
   
       // used for logging background events and errors
-      notify: function(ev, args) {
+      notify: function(ev: any, args: any) {
           if ('error' === ev || 'warning' === ev) {
               console.error(ev, args);
               return;
