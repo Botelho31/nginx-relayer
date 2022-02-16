@@ -8,12 +8,13 @@ services:
             - "80:80"
             - "443:443"
         volumes:
-            - ./build/default.conf:/etc/nginx/conf.d/default.conf
+            - ./build/conf:/etc/nginx/conf.d
+            - ./build/dhparam.pem:/etc/ssl/certs
             - /var/www/html:/var/www/html
             - /etc/letsencrypt:/etc/letsencrypt
             - /var/lib/letsencrypt:/var/lib/letsencrypt
-            - /etc/ssl/certs:/etc/ssl/certs
-            - ./:/src
+        command:
+            - "./scripts/run_nginx.sh"
         extra_hosts:
             - "host.docker.internal:host-gateway"
     

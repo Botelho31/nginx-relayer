@@ -4,9 +4,16 @@ import path from 'path'
 import { RelayConfig } from './domain/model/relay-config'
 
 const relayConfig = require('../relay-config.json') as RelayConfig[]
-const pathToConfig = path.join(__dirname, '../build/default.conf')
+const pathToConfig = path.join(__dirname, '../build/conf/default.conf')
 
-function addHttpServer(serverName: String, relay: String, acmeChallenge: boolean, httpsPass: boolean) {
+function createDir(relativePath: string) {
+  const dir = path.join(__dirname, relativePath)
+  if (!fs.existsSync(dir)){
+    fs.mkdirSync(dir);
+  }
+}
+
+function addHttpServer(serverName: String, relay: String, acmeChallenge: boolean, httpsPass: boolean) : String {
   let httpText = fs.readFileSync(path.join(__dirname, 'nginx-conf/http.txt'), 'utf8')
   httpText += `\nserver_name ${serverName};\n`
   if (acmeChallenge) {
@@ -18,17 +25,17 @@ function addHttpServer(serverName: String, relay: String, acmeChallenge: boolean
     httpText += httpsPass
   } else {
     httpText += 
-      `location / {
-          proxy_pass http://${relay}
+      ` location / {
+          proxy_pass http://${relay.replace('localhost', 'host.docker.internal')}
         }
       `
   }
-  httpText += '}'
+  httpText += '}\n'
 
-  fs.appendFileSync(pathToConfig, httpText)
+  return httpText
 }
 
-function addHttpsServer(serverName: String, relay: String) {
+function addHttpsServer(serverName: String, relay: String) : String {
   let httpsText = fs.readFileSync(path.join(__dirname, 'nginx-conf/https.txt'), 'utf8')
   httpsText += 
       ` server_name ${serverName};
@@ -37,22 +44,31 @@ function addHttpsServer(serverName: String, relay: String) {
         ssl_certificate_key /etc/letsencrypt/live/botelho.club/privkey.pem;
 
         location / {
-                proxy_pass http://${serverName}/;
+                proxy_pass http://${relay.replace('localhost', 'host.docker.internal')}/;
                 proxy_buffering on;
         }
-      }
+      }\n
     `
-  fs.appendFileSync(pathToConfig, httpsText)
+  return httpsText
 }
 
 function main() {
+  createDir('../build')
+  createDir('../build/conf')
   fs.openSync(pathToConfig, 'w')
+  let nginxConf = ""
   for(let i = 0;i < relayConfig.length; i+= 1) {
-    addHttpServer(relayConfig[i].servername , relayConfig[i].relay, relayConfig[i].acmeChallenge, relayConfig[i].httpsPass)
+    nginxConf += addHttpServer(relayConfig[i].serverName , relayConfig[i].relay, relayConfig[i].acmeChallenge, relayConfig[i].httpsPass)
     if (relayConfig[i].https) {
-      addHttpsServer(relayConfig[i].servername, relayConfig[i].relay)
+      nginxConf += addHttpsServer(relayConfig[i].serverName, relayConfig[i].relay)
+      createDir('../build/dhparam/')
+      const dhparamPath = path.join(__dirname, '../build/dhparam/dhparam-2048.pem')
+      if (!fs.existsSync(dhparamPath)) {
+        fs.writeFileSync(dhparamPath, require("dhparam")())
+      }
     }
   }
+  fs.appendFileSync(pathToConfig, nginxConf)
 }
 
 main()

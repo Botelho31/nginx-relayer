@@ -1,5 +1,5 @@
 export interface RelayConfig{
-  servername: String
+  serverName: String
   relay: String
   https: boolean
   httpsPass: boolean
