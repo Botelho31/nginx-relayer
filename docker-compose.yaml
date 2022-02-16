@@ -5,6 +5,7 @@ services:
         container_name: ${PROJECT}-webserver
         restart: unless-stopped
         ports:
+            - "3000:3000"
             - "80:80"
             - "443:443"
         environment: 
