@@ -7,9 +7,6 @@ services:
         ports:
             - "80:80"
             - "443:443"
-        environment: 
-            - PROJECT
-            - DOMAIN=${DNS}
         volumes:
             - /var/www/html:/var/www/html
             - /etc/letsencrypt:/etc/letsencrypt
@@ -17,8 +14,6 @@ services:
             - /etc/ssl/certs:/etc/ssl/certs
             - ./:/src
         command: ./src/scripts/run_nginx.sh
-        networks:
-            - app-network
         extra_hosts:
             - "host.docker.internal:host-gateway"
 
