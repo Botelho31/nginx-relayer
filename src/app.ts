@@ -26,7 +26,7 @@ function addHttpServer(serverName: String, relay: String, acmeChallenge: boolean
   } else {
     httpText += 
       ` location / {
-          proxy_pass http://${relay.replace('localhost', 'host.docker.internal')}
+          proxy_pass http://${relay.replace('localhost', 'host.docker.internal')};
         }
       `
   }
