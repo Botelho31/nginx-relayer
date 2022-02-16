@@ -1,9 +1,10 @@
 import fs from 'fs'
 import path from 'path'
 
-import { RelayConfig } from './domain/model/relay-config'
+import { ServerConfig } from './domain/model/server-config'
+import GreenlockHelper from './infra/greenlock-helper'
 
-const relayConfig = require('../relay-config.json') as RelayConfig[]
+const serverConfig = require('../relay-config.json') as ServerConfig
 const pathToConfig = path.join(__dirname, '../build/conf/default.conf')
 
 function createDir(relativePath: string) {
@@ -57,11 +58,14 @@ function main() {
   createDir('../build')
   createDir('../build/conf')
   fs.openSync(pathToConfig, 'w')
+  const greenlock =  new GreenlockHelper(serverConfig.contactEmail)
   let nginxConf = ""
-  for(let i = 0;i < relayConfig.length; i+= 1) {
-    nginxConf += addHttpServer(relayConfig[i].serverName , relayConfig[i].relay, relayConfig[i].acmeChallenge, relayConfig[i].httpsPass)
-    if (relayConfig[i].https) {
-      nginxConf += addHttpsServer(relayConfig[i].serverName, relayConfig[i].relay)
+  const relays = serverConfig.relays
+  for(let i = 0;i < relays.length; i+= 1) {
+    nginxConf += addHttpServer(relays[i].serverName , relays[i].relay, relays[i].acmeChallenge, relays[i].httpsPass)
+    greenlock.getCertificate(relays[i].serverName)
+    if (relays[i].https) {
+      nginxConf += addHttpsServer(relays[i].serverName, relays[i].relay)
       createDir('../build/dhparam/')
       const dhparamPath = path.join(__dirname, '../build/dhparam/dhparam-2048.pem')
       if (!fs.existsSync(dhparamPath)) {
