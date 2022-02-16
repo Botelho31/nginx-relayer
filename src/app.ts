@@ -45,8 +45,8 @@ function addHttpsServer(serverName: String, relay: String) : String {
   httpsText += 
       ` server_name ${serverName};
         ssl_dhparam /etc/ssl/certs/dhparam-2048.pem;
-        ssl_certificate /etc/letsencrypt/live/botelho.club/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/botelho.club/privkey.pem;
+        ssl_certificate /etc/letsencrypt/live/${serverName}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/${serverName}/privkey.pem;
 
         location / {
                 proxy_pass http://${relay.replace('localhost', 'host.docker.internal')}/;
