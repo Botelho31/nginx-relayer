@@ -21,6 +21,7 @@
     "dhparam": "^2.0.0",
     "dotenv": "^16.0.0",
     "greenlock": "^4.0.4",
+    "node-cron": "^3.0.0",
     "ts-node": "^10.5.0"
   },
   "devDependencies": {
