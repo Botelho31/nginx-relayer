@@ -9,7 +9,9 @@ export default class GreenlockHelper {
   private greenlock;
 
   constructor (contactEmail: String) {
-    const http01 = require('acme-http-01-webroot').create()
+    const http01 = require('acme-http-01-webroot').create({
+      webroot: '~/.local/tmp/acme-challenge' // default
+    })
     this.greenlock = Greenlock.create({
       packageRoot: path.join(__dirname, '../../'),
       configDir: 'greenlock.d/',
