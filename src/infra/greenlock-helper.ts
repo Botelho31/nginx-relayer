@@ -9,9 +9,6 @@ export default class GreenlockHelper {
   private greenlock;
 
   constructor (contactEmail: String) {
-    // const http01 = require('acme-http-01-webroot').create({
-    //   webroot: '~/.local/tmp/acme-challenge' // default
-    // })
     this.greenlock = Greenlock.create({
       packageRoot: path.join(__dirname, '../../'),
       configDir: 'greenlock.d/',
@@ -28,12 +25,20 @@ export default class GreenlockHelper {
         }
       }
     })
+
+    this.greenlock.manager.defaults()
   }
 
   async getCertificate (serverName: String) : Promise<any> {
+    const http01 = require('acme-http-01-webroot').create({
+      webroot: '~/.local/tmp/acme-challenge' // default
+    })
     await this.greenlock.add({
       subject: serverName,
-      altnames: [serverName]
+      altnames: [serverName],
+      challenges: {
+        'http-01': http01
+      }
     })
     const result = await this.greenlock.get({ servername: serverName })
     if (!result) {
