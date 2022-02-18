@@ -17,7 +17,7 @@ export default class GreenlockHelper {
       configDir: '../../greenlock.d/',
       packageAgent: pkg.name + '/' + pkg.version,
       maintainerEmail: contactEmail,
-      staging: true,
+      // staging: true,
       challenges: {
         'http-01': http01
       },
