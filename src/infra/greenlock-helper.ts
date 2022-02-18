@@ -1,4 +1,7 @@
 'use strict'
+
+import path from 'path'
+
 const pkg = require('../../package.json')
 const Greenlock = require('greenlock')
 
@@ -16,6 +19,19 @@ export default class GreenlockHelper {
         if (event === 'error') {
           // `details` is an error object in this case
           console.error(details)
+        }
+      }
+    })
+
+    this.greenlock.manager.defaults({
+      // The "Let's Encrypt Subscriber" (often the same as the maintainer)
+      // NOT the end customer (except where that is also the maintainer)
+      subscriberEmail: contactEmail,
+      agreeToTerms: true,
+      challenges: {
+        'http-01': {
+          module: 'acme-http-01-webroot',
+          webroot: path.join(__dirname, '../../build/challenge')
         }
       }
     })

@@ -142,6 +142,7 @@ async function main () {
     reloadNginx()
   }
   console.log('# Finished Relays Config')
+  createDir('../build/challenge')
   checkForCertificates.start()
   fs.appendFileSync(pathToConfig, nginxConf)
 }
