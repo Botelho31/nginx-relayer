@@ -2,7 +2,7 @@ version: '3'
 services:
     webserver:
         image: nginx
-        container_name: ${PROJECT}-webserver
+        container_name: nginx-relayer
         restart: unless-stopped
         ports:
             - "80:80"
