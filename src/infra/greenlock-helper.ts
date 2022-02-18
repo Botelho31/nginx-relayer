@@ -13,8 +13,8 @@ export default class GreenlockHelper {
       webroot: path.join(__dirname, '../../build/challenge')
     })
     this.greenlock = Greenlock.create({
-      packageRoot: __dirname,
-      configDir: '../../greenlock.d/',
+      packageRoot: path.join(__dirname, '../../'),
+      configDir: 'greenlock.d/',
       packageAgent: pkg.name + '/' + pkg.version,
       maintainerEmail: contactEmail,
       // staging: true,
