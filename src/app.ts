@@ -94,18 +94,18 @@ const checkForCertificates = cron.schedule('0 * * * * *', async () => {
   const relays = serverConfig.relays
   for (let i = 0; i < relays.length; i += 1) {
     if (relays[i].https && fs.existsSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))) {
-      console.log(`# Relay ${relays[i].serverName} has temporary certificate`)
+      console.log(`${relays[i].serverName} - # Relay has temporary certificate`)
       const httpsInUse = await checkForPortUsage(443)
       const httpInUse = await checkForPortUsage(80)
       if (httpInUse && httpsInUse) {
-        console.log(`# Creating full certificate for ${relays[i].serverName}`)
+        console.log(`${relays[i].serverName} - # Creating full certificate`)
         const certificate = await greenlock.getCertificate(relays[i].serverName)
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/fullchain.pem`), certificate.fullchain)
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/privkey.pem`), certificate.privkey)
         fs.unlinkSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))
         reloadNginx()
       } else {
-        console.log(`# Servers not open for certificate creation ${relays[i].serverName}`)
+        console.log(`${relays[i].serverName} - # Servers not open for certificate creation`)
       }
     }
   }
@@ -129,7 +129,7 @@ async function main () {
       if (!fs.existsSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}`))) {
         createDir(`../build/certificates/${relays[i].serverName}`)
         const certificatePath = path.join(`build/certificates/${relays[i].serverName}`)
-        console.log(`# Creating Dummy Certificates for ${relays[i].serverName}`)
+        console.log(`${relays[i].serverName} - # Creating Dummy Certificates`)
         await execPromise(`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${certificatePath}/privkey.pem -out ${certificatePath}/fullchain.pem -subj "/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project} /OU=IT Department/CN=${relays[i].serverName}"`)
         fs.openSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`), 'w')
         reloadNginx()
