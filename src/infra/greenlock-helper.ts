@@ -23,16 +23,16 @@ export default class GreenlockHelper {
       }
     })
 
+    const http01 = require('acme-http-01-webroot').create({
+      webroot: path.join(__dirname, '../../build/challenge')
+    })
     this.greenlock.manager.defaults({
       // The "Let's Encrypt Subscriber" (often the same as the maintainer)
       // NOT the end customer (except where that is also the maintainer)
       subscriberEmail: contactEmail,
       agreeToTerms: true,
       challenges: {
-        'http-01': {
-          module: 'acme-http-01-webroot',
-          webroot: path.join(__dirname, '../../build/challenge')
-        }
+        'http-01': http01
       }
     })
   }
