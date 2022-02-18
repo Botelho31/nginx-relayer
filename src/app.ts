@@ -88,19 +88,23 @@ async function checkForPortUsage (port: number) : Promise<Boolean> {
 }
 
 const checkForCertificates = cron.schedule('0 * * * * *', async () => {
-  console.log('Checking for certificates')
+  console.log('# Checking for certificates')
   const relays = serverConfig.relays
   const greenlock = new GreenlockHelper(serverConfig.contactEmail)
   for (let i = 0; i < relays.length; i += 1) {
     if (relays[i].https && fs.existsSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))) {
+      console.log(`# Relay ${relays[i].serverName} has temporary certificate`)
       const httpsInUse = await checkForPortUsage(443)
       const httpInUse = await checkForPortUsage(80)
       if (httpInUse && httpsInUse) {
+        console.log(`# Creating full certificate for ${relays[i].serverName}`)
         const certificate = await greenlock.getCertificate(relays[i].serverName)
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/fullchain.pem`), certificate.fullchain)
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/privkey.pem`), certificate.privkey)
         fs.unlinkSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))
         reloadNginx()
+      } else {
+        console.log(`# Servers not open for certificate creation ${relays[i].serverName}`)
       }
     }
   }
@@ -114,6 +118,7 @@ async function main () {
   fs.openSync(pathToConfig, 'w')
   let nginxConf = ''
   const relays = serverConfig.relays
+  console.log('# Creating Relays Config')
   for (let i = 0; i < relays.length; i += 1) {
     nginxConf += addHttpServer(relays[i].serverName, relays[i].relay, relays[i].https, relays[i].forceHttps)
     if (relays[i].https) {
@@ -123,18 +128,20 @@ async function main () {
       if (!fs.existsSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}`))) {
         createDir(`../build/certificates/${relays[i].serverName}`)
         const certificatePath = path.join(`build/certificates/${relays[i].serverName}`)
-        console.log(`Creating Dummy Certificates for ${relays[i].serverName}`)
+        console.log(`# Creating Dummy Certificates for ${relays[i].serverName}`)
         await execPromise(`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${certificatePath}/privkey.pem -out ${certificatePath}/fullchain.pem -subj "/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project} /OU=IT Department/CN=${relays[i].serverName}"`)
         fs.openSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`), 'w')
         reloadNginx()
       }
-      const dhparamPath = path.join(__dirname, '../build/dhparam/dhparam-2048.pem')
-      if (!fs.existsSync(dhparamPath)) {
-        fs.writeFileSync(dhparamPath, require('dhparam')())
-        reloadNginx()
-      }
     }
   }
+  const dhparamPath = path.join(__dirname, '../build/dhparam/dhparam-2048.pem')
+  if (!fs.existsSync(dhparamPath)) {
+    console.log('# Creating DHParam')
+    fs.writeFileSync(dhparamPath, require('dhparam')())
+    reloadNginx()
+  }
+  console.log('# Finished Relays Config')
   checkForCertificates.start()
   fs.appendFileSync(pathToConfig, nginxConf)
 }
