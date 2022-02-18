@@ -87,10 +87,11 @@ async function checkForPortUsage (port: number) : Promise<Boolean> {
   })
 }
 
+const greenlock = new GreenlockHelper(serverConfig.contactEmail)
+
 const checkForCertificates = cron.schedule('0 * * * * *', async () => {
   console.log('# Checking for certificates')
   const relays = serverConfig.relays
-  const greenlock = new GreenlockHelper(serverConfig.contactEmail)
   for (let i = 0; i < relays.length; i += 1) {
     if (relays[i].https && fs.existsSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))) {
       console.log(`# Relay ${relays[i].serverName} has temporary certificate`)
