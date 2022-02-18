@@ -120,7 +120,7 @@ async function main () {
       nginxConf += addHttpsServer(relays[i].serverName, relays[i].relay)
       createDir('../build/dhparam/')
       createDir('../build/certificates/')
-      if (!fs.existsSync(path.join(`..build/certificates/${relays[i].serverName}`))) {
+      if (!fs.existsSync(path.join(__dirname, `..build/certificates/${relays[i].serverName}`))) {
         createDir(`../build/certificates/${relays[i].serverName}`)
         const certificatePath = path.join(`build/certificates/${relays[i].serverName}`)
         console.log(`Creating Dummy Certificates for ${relays[i].serverName}`)
