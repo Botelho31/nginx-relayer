@@ -13,9 +13,9 @@ services:
             - ./build/certificates:/etc/letsencrypt/live
             - ./build/challenge:/challenge
             - /var/www/html:/var/www/html
-            - ./:/src
+            - ./scripts:/scripts
         command:
-            - "./src/scripts/run_nginx.sh"
+            - "./scripts/run_nginx.sh"
         extra_hosts:
             - "host.docker.internal:host-gateway"
           
