@@ -13,6 +13,14 @@ const server = net.createServer()
 const serverConfig = require('../relay-config.json') as ServerConfig
 const pathToConfig = path.join(__dirname, '../build/conf/default.conf')
 
+function reloadNginx () {
+  const pathToReload = path.join(__dirname, '../build/conf/reload')
+  if (fs.existsSync(pathToReload)) {
+    fs.unlinkSync(pathToReload)
+  }
+  fs.openSync(path.join(__dirname, '../build/conf/reload'), 'w')
+}
+
 function createDir (relativePath: string) {
   const dir = path.join(__dirname, relativePath)
   if (!fs.existsSync(dir)) {
@@ -92,6 +100,7 @@ const checkForCertificates = cron.schedule('0 * * * * *', async () => {
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/fullchain.pem`), certificate.fullchain)
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/privkey.pem`), certificate.privkey)
         fs.unlinkSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))
+        reloadNginx()
       }
     }
   }
@@ -117,10 +126,12 @@ async function main () {
         console.log(`Creating Dummy Certificates for ${relays[i].serverName}`)
         await execPromise(`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${certificatePath}/privkey.pem -out ${certificatePath}/fullchain.pem -subj "/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project} /OU=IT Department/CN=${relays[i].serverName}"`)
         fs.openSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`), 'w')
+        reloadNginx()
       }
       const dhparamPath = path.join(__dirname, '../build/dhparam/dhparam-2048.pem')
       if (!fs.existsSync(dhparamPath)) {
         fs.writeFileSync(dhparamPath, require('dhparam')())
+        reloadNginx()
       }
     }
   }

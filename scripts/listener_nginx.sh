@@ -4,5 +4,5 @@ while true
 do
        touch  ./lastwatch
        sleep 5
-       find /etc/nginx/conf.d -cnewer ./lastwatch -exec bash -c 'echo "################################## Reloading nginx" && nginx -s stop && nginx -s start' - {} \; 
+       find /etc/nginx/conf.d -cnewer ./lastwatch -exec bash -c 'echo "################################## Reloading nginx" && nginx -s reload' - {} \; 
 done
