@@ -87,9 +87,7 @@ async function checkForPortUsage (port: number) : Promise<Boolean> {
   })
 }
 
-const greenlock = new GreenlockHelper(serverConfig.contactEmail)
-
-const checkForCertificates = cron.schedule('0 * * * * *', async () => {
+async function certificateCheck () {
   console.log('# Checking for certificates')
   const relays = serverConfig.relays
   for (let i = 0; i < relays.length; i += 1) {
@@ -109,6 +107,12 @@ const checkForCertificates = cron.schedule('0 * * * * *', async () => {
       }
     }
   }
+}
+
+const greenlock = new GreenlockHelper(serverConfig.contactEmail)
+
+const checkForCertificates = cron.schedule('0 * * * * *', async () => {
+  await certificateCheck()
 }, {
   scheduled: false
 })
@@ -144,6 +148,7 @@ async function main () {
   }
   console.log('# Finished Relays Config')
   createDir('../build/challenge')
+  await certificateCheck()
   checkForCertificates.start()
   fs.appendFileSync(pathToConfig, nginxConf)
 }
