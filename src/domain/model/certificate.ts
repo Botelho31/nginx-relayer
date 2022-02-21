@@ -1,4 +1,4 @@
 export interface Certificate {
-  fullchain: String
-  privkey: String
+  fullchain: string
+  privkey: string
 }

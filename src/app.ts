@@ -5,7 +5,7 @@ import { exec } from 'child_process'
 import { ServerConfig } from './domain/model/server-config'
 import net from 'net'
 import cron from 'node-cron'
-import GreenlockHelper from './infra/greenlock-helper'
+import CertbotHelper from './infra/certbot-helper'
 
 const execPromise = util.promisify(exec)
 const server = net.createServer()
@@ -99,9 +99,9 @@ async function certificateCheck () {
       console.log(`${relays[i].serverName} - # Relay has temporary certificate`)
       const httpsInUse = await checkForPortUsage(443)
       const httpInUse = await checkForPortUsage(80)
-      if (httpInUse && httpsInUse) {
+      if (!httpInUse && !httpsInUse) {
         console.log(`${relays[i].serverName} - # Creating full certificate`)
-        const certificate = await greenlock.getCertificate(relays[i].serverName)
+        const certificate = await certbot.getCertificate(relays[i].serverName)
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/fullchain.pem`), certificate.fullchain)
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/privkey.pem`), certificate.privkey)
         fs.unlinkSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))
@@ -113,7 +113,7 @@ async function certificateCheck () {
   }
 }
 
-const greenlock = new GreenlockHelper(serverConfig.contactEmail)
+const certbot = new CertbotHelper(serverConfig.contactEmail)
 
 const checkForCertificates = cron.schedule('0 * * * * *', async () => {
   await certificateCheck()
@@ -152,7 +152,7 @@ async function main () {
   createDir('../build/challenge')
   fs.appendFileSync(pathToConfig, nginxConf)
   reloadNginx()
-  await sleep(10000)
+
   await certificateCheck()
   checkForCertificates.start()
 }

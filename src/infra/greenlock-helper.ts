@@ -9,9 +9,9 @@ export default class GreenlockHelper {
   private greenlock;
 
   constructor (contactEmail: String) {
-    // const http01 = require('acme-http-01-webroot').create({
-    //   webroot: path.join(__dirname, '../../build/challenge')
-    // })
+    const http01 = require('acme-http-01-webroot').create({
+      webroot: path.join(__dirname, '../../build/challenge')
+    })
     // console.log(http01)
     this.greenlock = Greenlock.create({
       packageRoot: path.join(__dirname, '../../'),
@@ -30,11 +30,11 @@ export default class GreenlockHelper {
       }
     })
 
-    // this.greenlock.manager.defaults({
-    // challenges: {
-    //   'http-01': http01
-    // }
-    // })
+    this.greenlock.manager.defaults({
+      challenges: {
+        'http-01': http01
+      }
+    })
     // this.greenlock.add({
     //   subject: 'media.botelho.club',
     //   altnames: ['media.botelho.club'],
