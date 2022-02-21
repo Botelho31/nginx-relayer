@@ -95,7 +95,7 @@ async function certificateCheck () {
       console.log(`${relays[i].serverName} - # Relay has temporary certificate`)
       const httpsInUse = await checkForPortUsage(443)
       const httpInUse = await checkForPortUsage(80)
-      if (httpInUse && httpsInUse) {
+      if (!httpInUse && !httpsInUse) {
         console.log(`${relays[i].serverName} - # Creating full certificate`)
         const certificate = await greenlock.getCertificate(relays[i].serverName)
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/fullchain.pem`), certificate.fullchain)
