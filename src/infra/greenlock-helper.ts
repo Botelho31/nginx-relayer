@@ -14,7 +14,7 @@ export default class GreenlockHelper {
       configDir: 'greenlock.d/',
       packageAgent: pkg.name + '/' + pkg.version,
       maintainerEmail: contactEmail,
-      // staging: true,
+      staging: true,
       // challenges: {
       //   'http-01': http01
       // },
@@ -30,15 +30,13 @@ export default class GreenlockHelper {
   }
 
   async getCertificate (serverName: String) : Promise<any> {
-    const http01 = require('acme-http-01-webroot').create({
-      webroot: '~/.local/tmp/acme-challenge' // default
-    })
+    // const http01 = require('acme-http-01-webroot').create({
+    //   webroot: '~/.local/tmp/acme-challenge' // default
+    // })
+    // console.log(http01)
     await this.greenlock.add({
       subject: serverName,
-      altnames: [serverName],
-      challenges: {
-        'http-01': http01
-      }
+      altnames: [serverName]
     })
     const result = await this.greenlock.get({ servername: serverName })
     if (!result) {
