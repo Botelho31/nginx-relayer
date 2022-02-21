@@ -13,6 +13,10 @@ const server = net.createServer()
 const serverConfig = require('../relay-config.json') as ServerConfig
 const pathToConfig = path.join(__dirname, '../build/conf/default.conf')
 
+export async function sleep (msInterval: number) {
+  return new Promise(resolve => setTimeout(resolve, msInterval))
+}
+
 function reloadNginx () {
   const pathToReload = path.join(__dirname, '../build/conf/reload')
   if (fs.existsSync(pathToReload)) {
@@ -136,7 +140,6 @@ async function main () {
         console.log(`${relays[i].serverName} - # Creating Dummy Certificates`)
         await execPromise(`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${certificatePath}/privkey.pem -out ${certificatePath}/fullchain.pem -subj "/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project} /OU=IT Department/CN=${relays[i].serverName}"`)
         fs.openSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`), 'w')
-        reloadNginx()
       }
     }
   }
@@ -144,13 +147,14 @@ async function main () {
   if (!fs.existsSync(dhparamPath)) {
     console.log('# Creating DHParam')
     fs.writeFileSync(dhparamPath, require('dhparam')())
-    reloadNginx()
   }
   console.log('# Finished Relays Config')
   createDir('../build/challenge')
+  fs.appendFileSync(pathToConfig, nginxConf)
+  reloadNginx()
+  await sleep(10000)
   await certificateCheck()
   checkForCertificates.start()
-  fs.appendFileSync(pathToConfig, nginxConf)
 }
 
 main()
