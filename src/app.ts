@@ -68,6 +68,10 @@ function addHttpsServer (serverName: String, relay: String) : String {
         location / {
                 proxy_pass http://${relay.replace('localhost', 'host.docker.internal')}/;
                 proxy_buffering on;
+                add_header 'Access-Control-Allow-Headers' "Access-Control-Allow-Origin,Authorization,DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range" always;
+                add_header 'Access-Control-Allow-Origin' "*" always;
+                add_header 'Access-Control-Allow-Methods' "GET, PUT, POST, DELETE, HEAD, OPTIONS" always;
+                add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range';
         }
       }\n
     `
