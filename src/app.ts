@@ -101,9 +101,7 @@ async function certificateCheck () {
       const httpInUse = await checkForPortUsage(80)
       if (httpInUse && httpsInUse) {
         console.log(`${relays[i].serverName} - # Creating full certificate`)
-        const certificate = await certbot.getCertificate(relays[i].serverName)
-        fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/fullchain.pem`), certificate.fullchain)
-        fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/privkey.pem`), certificate.privkey)
+        await certbot.getCertificate(relays[i].serverName)
         fs.unlinkSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))
         reloadNginx()
       } else {
@@ -117,6 +115,14 @@ const certbot = new CertbotHelper(serverConfig.contactEmail)
 
 const checkForCertificates = cron.schedule('0 * * * * *', async () => {
   await certificateCheck()
+}, {
+  scheduled: false
+})
+
+const renewCertificates = cron.schedule('0 0 1 * *', async () => {
+  console.log('# Renewing certificates')
+  await certbot.renew(serverConfig.relays)
+  reloadNginx()
 }, {
   scheduled: false
 })
@@ -155,6 +161,7 @@ async function main () {
 
   await certificateCheck()
   checkForCertificates.start()
+  renewCertificates.start()
 }
 
 main()
