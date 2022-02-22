@@ -1,5 +1,20 @@
 version: '3'
 services:
+    nodejs:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: nginx-relayer-node
+        volumes:
+            - nginx-conf:/app/build/conf
+            - nginx-dhparam:/app/build/dhparam
+            - nginx-certificate:/app/build/certificate
+            - nginx-challenge:/app/build/challenge
+            - /var/www/html:/var/www/html
+        container_name: nginx-relayer-node
+        restart: unless-stopped
+        networks:
+            - app-network
     webserver:
         image: nginx
         container_name: nginx-relayer
@@ -8,15 +23,27 @@ services:
             - "80:80"
             - "443:443"
         volumes:
-            - ./build/conf:/etc/nginx/conf.d
-            - ./build/dhparam:/etc/ssl/certs
-            - ./build/certificates:/etc/letsencrypt/live
-            - ./build/challenge:/challenge
+            - nginx-conf:/etc/nginx/conf.d
+            - nginx-dhparam:/etc/ssl/certs
+            - nginx-certificate:/etc/letsencrypt/live
+            - nginx-challenge:/challenge
             - /var/www/html:/var/www/html
             - ./scripts:/scripts
         command:
             - "./scripts/run_nginx.sh"
+        depends_on:
+            - nodejs
+        networks:
+            - app-network
         extra_hosts:
             - "host.docker.internal:host-gateway"
-          
+volumes:
+    nginx-dhparam:
+    nginx-conf:
+    nginx-certificate:
+    nginx-challenge:
+    
+networks:
+    app-network:
+        driver: bridge
           
