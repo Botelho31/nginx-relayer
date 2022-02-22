@@ -6,7 +6,9 @@
   "scripts": {
     "start": "ts-node ./src/app.ts",
     "install:certbot": "./scripts/install_certbot.sh",
-    "nginx": "docker-compose build && docker-compose up -d --force-recreate",
+    "nginx:start": "docker-compose build && docker-compose up -d --force-recreate",
+    "nginx:stop": "docker-compose stop",
+    "nginx:down": "docker-compose down",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
