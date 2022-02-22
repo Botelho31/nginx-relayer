@@ -25,10 +25,13 @@ async function execProcess (command: string) : Promise<void> {
     process.stderr.write(data.toString())
   })
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     child.on('close', function (code) {
-      console.log('closing code: ' + code)
-      resolve()
+      if (code === 1) {
+        reject(new Error('Process exited with error code 1'))
+      } else {
+        resolve()
+      }
     })
   })
 }
