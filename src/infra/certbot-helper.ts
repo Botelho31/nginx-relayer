@@ -11,7 +11,7 @@ export default class CertbotHelper {
 
   async getCertificate (serverName: string) : Promise<void> {
     const challengePath = path.join(__dirname, '../../build/challenge')
-    await execProcess('certbot', ['certbot', 'certonly', '--webroot', `--webroot-path=${challengePath}`, '--email', this.contactEmail, '--agree-tos', '--noninteractive', '--no-eff-email', '-d', serverName])
+    await execProcess('certbot', ['certonly', '--webroot', `--webroot-path=${challengePath}`, '--email', this.contactEmail, '--agree-tos', '--noninteractive', '--no-eff-email', '-d', serverName])
     const fullchain = fs.readFileSync(`/etc/letsencrypt/live/${serverName}/fullchain.pem`, 'utf8')
     const privkey = fs.readFileSync(`/etc/letsencrypt/live/${serverName}/privkey.pem`, 'utf8')
     fs.writeFileSync(path.join(__dirname, `../../build/certificates/${serverName}/fullchain.pem`), fullchain)
