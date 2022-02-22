@@ -94,11 +94,13 @@ function addHttpsServer (serverName: String, relay: String) : String {
 }
 
 async function checkForPortUsage (port: number) : Promise<Boolean> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     server.once('error', function (err: any) {
       if (err.code === 'EADDRINUSE') {
         // port is currently in use
         resolve(true)
+      } else {
+        reject(err)
       }
     })
 
