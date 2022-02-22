@@ -2,11 +2,9 @@ import fs from 'fs'
 import path from 'path'
 import { spawn } from 'child_process'
 import { ServerConfig } from './domain/model/server-config'
-import net from 'net'
 import cron from 'node-cron'
+import { check } from 'tcp-port-used'
 import CertbotHelper from './infra/certbot-helper'
-
-const server = net.createServer()
 
 const serverConfig = require('../relay-config.json') as ServerConfig
 const pathToConfig = path.join(__dirname, '../build/conf/default.conf')
@@ -94,24 +92,8 @@ function addHttpsServer (serverName: String, relay: String) : String {
 }
 
 async function checkForPortUsage (port: number) : Promise<Boolean> {
-  return new Promise((resolve, reject) => {
-    server.once('error', function (err: any) {
-      if (err.code === 'EADDRINUSE') {
-        // port is currently in use
-        resolve(true)
-      } else {
-        reject(err)
-      }
-    })
-
-    server.once('listening', function () {
-      // close the server if listening doesn't fail
-      server.close()
-      resolve(false)
-    })
-
-    server.listen(port)
-  })
+  const result = await check(port, '127.0.0.1')
+  return result
 }
 
 async function certificateCheck () {
