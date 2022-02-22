@@ -22,7 +22,7 @@ function reloadNginx () {
   if (fs.existsSync(pathToReload)) {
     fs.unlinkSync(pathToReload)
   }
-  fs.openSync(path.join(__dirname, '../build/conf/reload'), 'w')
+  fs.writeFileSync(path.join(__dirname, '../build/conf/reload'), '')
 }
 
 function createDir (relativePath: string) {
@@ -106,6 +106,7 @@ async function certificateCheck () {
         await certbot.getCertificate(relays[i].serverName)
         fs.unlinkSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))
         reloadNginx()
+        console.log(`${relays[i].serverName} - # Full certificate created, reloading NGINX`)
       } else {
         console.log(`${relays[i].serverName} - # Servers not open for certificate creation`)
       }
@@ -132,7 +133,7 @@ const renewCertificates = cron.schedule('0 0 1 * *', async () => {
 async function main () {
   createDir('../build')
   createDir('../build/conf')
-  fs.openSync(pathToConfig, 'w')
+  fs.writeFileSync(pathToConfig, '')
   let nginxConf = ''
   const relays = serverConfig.relays
   console.log('# Creating Relays Config')
@@ -147,7 +148,7 @@ async function main () {
         const certificatePath = path.join(`build/certificates/${relays[i].serverName}`)
         console.log(`${relays[i].serverName} - # Creating Dummy Certificates`)
         await execPromise(`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${certificatePath}/privkey.pem -out ${certificatePath}/fullchain.pem -subj "/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project} /OU=IT Department/CN=${relays[i].serverName}"`)
-        fs.openSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`), 'w')
+        fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`), '')
       }
     }
   }
