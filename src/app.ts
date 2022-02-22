@@ -92,7 +92,7 @@ function addHttpsServer (serverName: String, relay: String) : String {
 }
 
 async function checkForPortUsage (port: number) : Promise<Boolean> {
-  const result = await check(port, 'webserver')
+  const result = await check(port, '127.0.0.1')
   return result
 }
 

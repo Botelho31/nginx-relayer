@@ -31,10 +31,12 @@ services:
             - ./scripts:/scripts
         command:
             - "./scripts/run_nginx.sh"
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
+        depends_on:
+            - nodejs
         networks:
             - app-network
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
 networks:
     app-network:
         driver: bridge
