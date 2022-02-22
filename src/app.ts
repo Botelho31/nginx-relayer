@@ -109,7 +109,7 @@ const renewCertificates = cron.schedule('0 0 1 * *', async () => {
 async function main () {
   createDir('../build')
   createDir('../build/conf')
-  fs.writeFileSync(pathToConfig, '')
+  fs.writeFileSync(pathToConfig, 'server_names_hash_bucket_size  64;\n')
   let nginxConf = ''
   const relays = serverConfig.relays
   console.log('# Creating Relays Config')

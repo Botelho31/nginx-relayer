@@ -1,7 +1,6 @@
 server {
         listen 443 ssl http2;
         listen [::]:443 ssl http2;
-        server_names_hash_bucket_size  64;
 
         server_tokens off;
 
