@@ -187,7 +187,7 @@ async function main () {
   const dhparamPath = path.join(__dirname, '../build/dhparam/dhparam-2048.pem')
   if (!fs.existsSync(dhparamPath)) {
     console.log('# Creating DHParam')
-    fs.writeFileSync(dhparamPath, require('dhparam')())
+    await execProcess(`openssl dhparam -out ${dhparamPath} 2048`)
   }
   console.log('# Finished Relays Config')
   createDir('../build/challenge')
