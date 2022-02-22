@@ -39,6 +39,8 @@ function addHttpServer (serverName: String, relay: String, certificate: boolean,
       ` location / {
           proxy_pass http://${relay.replace('localhost', 'host.docker.internal')};
           proxy_buffering on;
+          proxy_set_header Host            $host;
+          proxy_set_header X-Forwarded-For $remote_addr;
         }
       `
   }
@@ -58,6 +60,8 @@ function addHttpsServer (serverName: String, relay: String) : String {
         location / {
                 proxy_pass http://${relay.replace('localhost', 'host.docker.internal')}/;
                 proxy_buffering on;
+                proxy_set_header Host            $host;
+                proxy_set_header X-Forwarded-For $remote_addr;
         }
       }\n
     `
