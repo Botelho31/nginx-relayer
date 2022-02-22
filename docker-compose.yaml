@@ -5,13 +5,13 @@ services:
             context: .
             dockerfile: Dockerfile
         image: nginx-relayer-node
+        container_name: nginx-relayer-node
         volumes:
             - ./build/conf:/app/build/conf
             - ./build/dhparam:/app/build/dhparam
-            - ./build/certificates:/app/build/certificate
+            - ./build/certificates:/app/build/certificates
             - ./build/challenge:/app/build/challenge
             - /var/www/html:/var/www/html
-        container_name: nginx-relayer-node
         restart: unless-stopped
         networks:
             - app-network
