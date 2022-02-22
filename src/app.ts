@@ -125,7 +125,7 @@ async function main () {
         createDir(`../build/certificates/${relays[i].serverName}`)
         const certificatePath = path.join(`build/certificates/${relays[i].serverName}`)
         console.log(`${relays[i].serverName} - # Creating Dummy Certificates`)
-        await execProcess('openssl', ['req', '-x509', '-nodes', '-days', '365', '-newkey', 'rsa:2048', '-keyout', `${certificatePath}/privkey.pem`, '-out', `${certificatePath}/fullchain.pem`, '-subj', `"//C=${serverConfig.address.country}//ST=${serverConfig.address.city}//L=${serverConfig.address.neighborhood}//O=${serverConfig.project}//OU=IT-Department//CN=${relays[i].serverName}"`])
+        await execProcess('openssl', ['req', '-x509', '-nodes', '-days', '365', '-newkey', 'rsa:2048', '-keyout', `${certificatePath}/privkey.pem`, '-out', `${certificatePath}/fullchain.pem`, '-subj', `/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project}/OU=IT-Department/CN=${relays[i].serverName}`])
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`), '')
       }
     }
