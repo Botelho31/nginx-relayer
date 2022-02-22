@@ -18,33 +18,16 @@ export async function sleep (msInterval: number) {
 async function execProcess (command: string) : Promise<void> {
   const splitCommand = command.split(' ')
   const child = spawn(splitCommand[0], splitCommand.splice(1, splitCommand.length))
-  child.stdout.setEncoding('utf8')
   child.stdout.on('data', function (data) {
-    // Here is where the output goes
-
-    console.log('stdout: ' + data)
-
-    // data = data.toString()
-    // scriptOutput+=data
+    console.log(data.toString)
   })
-
-  child.stderr.setEncoding('utf8')
   child.stderr.on('data', function (data) {
-    // Here is where the error output goes
-
-    console.log('stderr: ' + data)
-
-    // data=data.toString()
-    // scriptOutput+=data
+    console.error(data.toString)
   })
 
   return new Promise((resolve) => {
     child.on('close', function (code) {
-      // Here you can get the exit code of the script
-
       console.log('closing code: ' + code)
-
-      // console.log('Full output of script: ', scriptOutput)
       resolve()
     })
   })
