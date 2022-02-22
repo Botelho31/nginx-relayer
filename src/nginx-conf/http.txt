@@ -2,3 +2,4 @@ server {
     listen 80;
     listen [::]:80;
     client_max_body_size 50M;
+    server_names_hash_bucket_size  64;

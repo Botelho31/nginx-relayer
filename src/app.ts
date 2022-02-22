@@ -39,8 +39,6 @@ function addHttpServer (serverName: String, relay: String, certificate: boolean,
       ` location / {
           proxy_pass http://${relay.replace('localhost', 'host.docker.internal')};
           proxy_buffering on;
-          proxy_set_header Host $host;
-          proxy_set_header Access-Control-Allow-Origin *;
         }
       `
   }
