@@ -16,7 +16,8 @@ export async function sleep (msInterval: number) {
 }
 
 async function execProcess (command: string) : Promise<void> {
-  const child = spawn(command)
+  const splitCommand = command.split(' ')
+  const child = spawn(splitCommand[0], splitCommand.splice(1, splitCommand.length))
   child.stdout.setEncoding('utf8')
   child.stdout.on('data', function (data) {
     // Here is where the output goes
