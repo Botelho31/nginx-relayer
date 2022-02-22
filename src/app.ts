@@ -1,13 +1,11 @@
 import fs from 'fs'
 import path from 'path'
-import util from 'util'
-import { exec } from 'child_process'
+import { spawn } from 'child_process'
 import { ServerConfig } from './domain/model/server-config'
 import net from 'net'
 import cron from 'node-cron'
 import CertbotHelper from './infra/certbot-helper'
 
-const execPromise = util.promisify(exec)
 const server = net.createServer()
 
 const serverConfig = require('../relay-config.json') as ServerConfig
@@ -15,6 +13,40 @@ const pathToConfig = path.join(__dirname, '../build/conf/default.conf')
 
 export async function sleep (msInterval: number) {
   return new Promise(resolve => setTimeout(resolve, msInterval))
+}
+
+async function execProcess (command: string) : Promise<void> {
+  const child = spawn(command)
+  child.stdout.setEncoding('utf8')
+  child.stdout.on('data', function (data) {
+    // Here is where the output goes
+
+    console.log('stdout: ' + data)
+
+    // data = data.toString()
+    // scriptOutput+=data
+  })
+
+  child.stderr.setEncoding('utf8')
+  child.stderr.on('data', function (data) {
+    // Here is where the error output goes
+
+    console.log('stderr: ' + data)
+
+    // data=data.toString()
+    // scriptOutput+=data
+  })
+
+  return new Promise((resolve) => {
+    child.on('close', function (code) {
+      // Here you can get the exit code of the script
+
+      console.log('closing code: ' + code)
+
+      // console.log('Full output of script: ', scriptOutput)
+      resolve()
+    })
+  })
 }
 
 function reloadNginx () {
@@ -147,7 +179,7 @@ async function main () {
         createDir(`../build/certificates/${relays[i].serverName}`)
         const certificatePath = path.join(`build/certificates/${relays[i].serverName}`)
         console.log(`${relays[i].serverName} - # Creating Dummy Certificates`)
-        await execPromise(`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${certificatePath}/privkey.pem -out ${certificatePath}/fullchain.pem -subj "/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project} /OU=IT Department/CN=${relays[i].serverName}"`)
+        await execProcess(`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${certificatePath}/privkey.pem -out ${certificatePath}/fullchain.pem -subj "/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project} /OU=IT Department/CN=${relays[i].serverName}"`)
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`), '')
       }
     }
