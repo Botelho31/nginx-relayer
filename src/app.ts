@@ -1,38 +1,13 @@
 import fs from 'fs'
 import path from 'path'
-import { spawn } from 'child_process'
 import { ServerConfig } from './domain/model/server-config'
 import cron from 'node-cron'
 import { check } from 'tcp-port-used'
 import CertbotHelper from './infra/certbot-helper'
+import { execProcess } from './utils/general'
 
 const serverConfig = require('../relay-config.json') as ServerConfig
 const pathToConfig = path.join(__dirname, '../build/conf/default.conf')
-
-export async function sleep (msInterval: number) {
-  return new Promise(resolve => setTimeout(resolve, msInterval))
-}
-
-async function execProcess (command: string) : Promise<void> {
-  const splitCommand = command.split(' ')
-  const child = spawn(splitCommand[0], splitCommand.splice(1, splitCommand.length))
-  child.stdout.on('data', function (data) {
-    process.stdout.write(data.toString())
-  })
-  child.stderr.on('data', function (data) {
-    process.stderr.write(data.toString())
-  })
-
-  return new Promise((resolve, reject) => {
-    child.on('close', function (code) {
-      if (code === 1) {
-        reject(new Error('Process exited with error code 1'))
-      } else {
-        resolve()
-      }
-    })
-  })
-}
 
 function reloadNginx () {
   const pathToReload = path.join(__dirname, '../build/conf/reload')
@@ -150,7 +125,7 @@ async function main () {
         createDir(`../build/certificates/${relays[i].serverName}`)
         const certificatePath = path.join(`build/certificates/${relays[i].serverName}`)
         console.log(`${relays[i].serverName} - # Creating Dummy Certificates`)
-        await execProcess(`openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${certificatePath}/privkey.pem -out ${certificatePath}/fullchain.pem -subj "/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project} /OU=IT Department/CN=${relays[i].serverName}"`)
+        await execProcess('openssl', ['req', '-x509', '-nodes', '-days', '365', '-newkey', 'rsa:2048', '-keyout', `${certificatePath}/privkey.pem`, '-out', `${certificatePath}/fullchain.pem`, '-subj', `"/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project} /OU=IT Department/CN=${relays[i].serverName}"`])
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`), '')
       }
     }
@@ -158,7 +133,7 @@ async function main () {
   const dhparamPath = path.join(__dirname, '../build/dhparam/dhparam-2048.pem')
   if (!fs.existsSync(dhparamPath)) {
     console.log('# Creating DHParam')
-    await execProcess(`openssl dhparam -out ${dhparamPath} 2048`)
+    await execProcess('openssl', ['dhparam', '-out', dhparamPath, '2048'])
   }
   console.log('# Finished Relays Config')
   createDir('../build/challenge')

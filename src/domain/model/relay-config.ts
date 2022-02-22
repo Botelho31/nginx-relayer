@@ -1,6 +1,6 @@
 export interface RelayConfig{
-  serverName: String
-  relay: String
+  serverName: string
+  relay: string
   https: boolean
   forceHttps: boolean
 }
