@@ -19,10 +19,10 @@ async function execProcess (command: string) : Promise<void> {
   const splitCommand = command.split(' ')
   const child = spawn(splitCommand[0], splitCommand.splice(1, splitCommand.length))
   child.stdout.on('data', function (data) {
-    console.log(data.toString)
+    process.stdout.write(data.toString())
   })
   child.stderr.on('data', function (data) {
-    console.error(data.toString)
+    process.stderr.write(data.toString())
   })
 
   return new Promise((resolve) => {
