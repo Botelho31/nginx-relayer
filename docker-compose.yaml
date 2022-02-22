@@ -1,5 +1,20 @@
 version: '3'
 services:
+    nodejs:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: nginx-relayer-node
+        volumes:
+            - ./build/conf:/app/build/conf
+            - ./build/dhparam:/app/build/dhparam
+            - ./build/certificates:/app/build/certificate
+            - ./build/challenge:/app/build/challenge
+            - /var/www/html:/var/www/html
+        container_name: nginx-relayer-node
+        restart: unless-stopped
+        networks:
+            - app-network
     webserver:
         image: nginx
         container_name: nginx-relayer
@@ -18,5 +33,9 @@ services:
             - "./scripts/run_nginx.sh"
         extra_hosts:
             - "host.docker.internal:host-gateway"
-          
+        networks:
+            - app-network
+networks:
+    app-network:
+        driver: bridge
           

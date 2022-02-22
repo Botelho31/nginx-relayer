@@ -20,7 +20,6 @@
   },
   "homepage": "https://github.com/Botelho31/botelho-server-nginx#readme",
   "dependencies": {
-    "@types/tcp-port-used": "^1.0.0",
     "acme-http-01-webroot": "^3.0.0",
     "dotenv": "^16.0.0",
     "greenlock": "^4.0.4",
@@ -31,6 +30,7 @@
   "devDependencies": {
     "@types/node": "^17.0.18",
     "@types/node-cron": "^3.0.1",
+    "@types/tcp-port-used": "^1.0.0",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
     "eslint": "^7.32.0",
