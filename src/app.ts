@@ -4,7 +4,7 @@ import { ServerConfig } from './domain/model/server-config'
 import cron from 'node-cron'
 import { check } from 'tcp-port-used'
 import CertbotHelper from './infra/certbot-helper'
-import { execProcess } from './utils/general'
+import { execProcess, log } from './utils/general'
 import { RelayConfig } from './domain/model/relay-config'
 
 let currentServerConfig = require('../relay-config.json') as ServerConfig
@@ -141,21 +141,21 @@ async function checkForPortUsage (port: number) : Promise<Boolean> {
 }
 
 async function certificateCheck () {
-  console.log('# Checking for certificates')
+  log('Checking for certificates')
   const relays = currentServerConfig.relays
   for (let i = 0; i < relays.length; i += 1) {
     if (relays[i].https && fs.existsSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))) {
-      console.log(`${relays[i].serverName} - # Relay has temporary certificate`)
+      log(`${relays[i].serverName} - # Relay has temporary certificate`)
       const httpsInUse = await checkForPortUsage(443)
       const httpInUse = await checkForPortUsage(80)
       if (httpInUse && httpsInUse) {
-        console.log(`${relays[i].serverName} - # Creating full certificate`)
+        log(`${relays[i].serverName} - # Creating full certificate`)
         await certbot.getCertificate(relays[i].serverName)
         fs.unlinkSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))
         reloadNginx()
-        console.log(`${relays[i].serverName} - # Full certificate created, reloading NGINX`)
+        log(`${relays[i].serverName} - # Full certificate created, reloading NGINX`)
       } else {
-        console.log(`${relays[i].serverName} - # Servers not open for certificate creation`)
+        log(`${relays[i].serverName} - # Servers not open for certificate creation`)
       }
     }
   }
@@ -164,7 +164,7 @@ async function certificateCheck () {
 async function createNginxConfig (serverConfig: ServerConfig) {
   let nginxConf = 'server_names_hash_bucket_size  64;\n'
   const relays = serverConfig.relays
-  console.log('# Creating Relays Config')
+  log('Creating Relays Config')
   for (let i = 0; i < relays.length; i += 1) {
     // Creates Relays Initial Configuration
     nginxConf += addHttpServer(relays[i])
@@ -179,7 +179,7 @@ async function createNginxConfig (serverConfig: ServerConfig) {
       if (!fs.existsSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}`))) {
         createDir(`../build/certificates/${relays[i].serverName}`)
         const certificatePath = path.join(`build/certificates/${relays[i].serverName}`)
-        console.log(`${relays[i].serverName} - # Creating Dummy Certificates`)
+        log(`${relays[i].serverName} - # Creating Dummy Certificates`)
         await execProcess('openssl', ['req', '-x509', '-nodes', '-days', '365', '-newkey', 'rsa:2048', '-keyout', `${certificatePath}/privkey.pem`, '-out', `${certificatePath}/fullchain.pem`, '-subj', `/C=${serverConfig.address.country}/ST=${serverConfig.address.city}/L=${serverConfig.address.neighborhood}/O=${serverConfig.project}/OU=IT-Department/CN=${relays[i].serverName}`])
         fs.writeFileSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`), '')
       }
@@ -189,12 +189,12 @@ async function createNginxConfig (serverConfig: ServerConfig) {
   // Creates DHParam
   const dhparamPath = path.join(__dirname, '../build/dhparam/dhparam-2048.pem')
   if (!fs.existsSync(dhparamPath)) {
-    console.log('# Creating DHParam')
+    log('Creating DHParam')
     await execProcess('openssl', ['dhparam', '-out', dhparamPath, '2048'])
   }
 
   // After creating complete config waits for challenge and reloads NGINX
-  console.log('# Finished Relays Config')
+  log('Finished Relays Config')
   createDir('../build/challenge')
   fs.writeFileSync(pathToConfig, nginxConf)
   reloadNginx()
@@ -206,11 +206,12 @@ const checkForCertificates = cron.schedule('0 * * * * *', async () => {
   try {
     const newServerConfig = require('../relay-config.json') as ServerConfig
     if (newServerConfig !== currentServerConfig) {
+      log('Updated server config detected')
       currentServerConfig = newServerConfig
       createNginxConfig(newServerConfig)
     }
   } catch (err) {
-    console.log('Error With New Config')
+    log('Error With New Config')
   }
   await certificateCheck()
 }, {
@@ -218,7 +219,7 @@ const checkForCertificates = cron.schedule('0 * * * * *', async () => {
 })
 
 const renewCertificates = cron.schedule('0 0 1 * *', async () => {
-  console.log('# Renewing certificates')
+  log('Renewing certificates')
   await certbot.renew(currentServerConfig.relays)
   reloadNginx()
 }, {

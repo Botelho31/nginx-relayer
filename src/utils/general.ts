@@ -1,4 +1,9 @@
 import { spawn } from 'child_process'
+import moment from 'moment'
+
+export function log (log: string) {
+  console.log(moment().format('DD/MM/YYYY - hh:mm:ss #'), log)
+}
 
 export async function sleep (msInterval: number) {
   return new Promise(resolve => setTimeout(resolve, msInterval))
