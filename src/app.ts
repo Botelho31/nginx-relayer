@@ -137,7 +137,7 @@ function addHttpsServer (relay: RelayConfig) : String {
         proxy_set_header X-Forwarded-For $remote_addr;
     }`
   }
-  httpsText += ')\n'
+  httpsText += '}\n'
   return httpsText
 }
 
