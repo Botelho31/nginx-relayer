@@ -11,7 +11,7 @@ services:
             - ./build/dhparam:/app/build/dhparam
             - ./build/certificates:/app/build/certificates
             - ./build/challenge:/app/build/challenge
-            - /var/www/html:/var/www/html
+            - ./relay-config.json:/app/relay-config.json
         restart: unless-stopped
         networks:
             - app-network
@@ -27,7 +27,7 @@ services:
             - ./build/dhparam:/etc/ssl/certs
             - ./build/certificates:/etc/letsencrypt/live
             - ./build/challenge:/challenge
-            - /var/www/html:/var/www/html
+            - ./build/websites:/var/www/html
             - ./scripts:/scripts
         command:
             - "./scripts/run_nginx.sh"
@@ -37,6 +37,10 @@ services:
             - app-network
         extra_hosts:
             - "host.docker.internal:host-gateway"
+
+volumes:
+    nginx-relayer-websites:
+
 networks:
     app-network:
         driver: bridge

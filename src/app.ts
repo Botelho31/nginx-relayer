@@ -5,6 +5,7 @@ import cron from 'node-cron'
 import { check } from 'tcp-port-used'
 import CertbotHelper from './infra/certbot-helper'
 import { execProcess } from './utils/general'
+import { RelayConfig } from './domain/model/relay-config'
 
 const serverConfig = require('../relay-config.json') as ServerConfig
 const pathToConfig = path.join(__dirname, '../build/conf/default.conf')
@@ -24,20 +25,20 @@ function createDir (relativePath: string) {
   }
 }
 
-function addHttpServer (serverName: String, relay: String, certificate: boolean, httpsPass: boolean) : String {
+function addHttpServer (relay: RelayConfig) : String {
   let httpText = fs.readFileSync(path.join(__dirname, 'nginx-conf/http.txt'), 'utf8')
-  httpText += `\nserver_name ${serverName};\n`
-  if (certificate) {
+  httpText += `\nserver_name ${relay.serverName};\n`
+  if (relay.https) {
     const acmeText = fs.readFileSync(path.join(__dirname, 'nginx-conf/acme-challenge.txt'), 'utf8')
     httpText += acmeText
   }
-  if (httpsPass) {
+  if (relay.forceHttps) {
     const httpsPass = fs.readFileSync(path.join(__dirname, 'nginx-conf/https-pass.txt'), 'utf8')
     httpText += httpsPass
   } else {
     httpText +=
       ` location / {
-          proxy_pass http://${relay.replace('localhost', 'host.docker.internal')};
+          proxy_pass http://${relay.relay.replace('localhost', 'host.docker.internal')};
           proxy_buffering on;
           proxy_set_header Host            $host;
           proxy_set_header X-Forwarded-For $remote_addr;
@@ -49,16 +50,16 @@ function addHttpServer (serverName: String, relay: String, certificate: boolean,
   return httpText
 }
 
-function addHttpsServer (serverName: String, relay: String) : String {
+function addHttpsServer (relay: RelayConfig) : String {
   let httpsText = fs.readFileSync(path.join(__dirname, 'nginx-conf/https.txt'), 'utf8')
   httpsText +=
-      ` server_name ${serverName};
+      ` server_name ${relay.serverName};
         ssl_dhparam /etc/ssl/certs/dhparam-2048.pem;
-        ssl_certificate /etc/letsencrypt/live/${serverName}/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/${serverName}/privkey.pem;
+        ssl_certificate /etc/letsencrypt/live/${relay.serverName}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/${relay.serverName}/privkey.pem;
 
         location / {
-                proxy_pass http://${relay.replace('localhost', 'host.docker.internal')}/;
+                proxy_pass http://${relay.relay.replace('localhost', 'host.docker.internal')}/;
                 proxy_buffering on;
                 proxy_set_header Host            $host;
                 proxy_set_header X-Forwarded-For $remote_addr;
@@ -111,18 +112,27 @@ const renewCertificates = cron.schedule('0 0 1 * *', async () => {
 })
 
 async function main () {
+  // Creates Base Folders
   createDir('../build')
   createDir('../build/conf')
+  createDir('../build/websites')
+
+  // Creates Relays Initial Configuration
   fs.writeFileSync(pathToConfig, 'server_names_hash_bucket_size  64;\n')
   let nginxConf = ''
   const relays = serverConfig.relays
   console.log('# Creating Relays Config')
   for (let i = 0; i < relays.length; i += 1) {
-    nginxConf += addHttpServer(relays[i].serverName, relays[i].relay, relays[i].https, relays[i].forceHttps)
+    // Creates Relays Initial Configuration
+    nginxConf += addHttpServer(relays[i])
+
+    // Creates HTTPs config if required
     if (relays[i].https) {
-      nginxConf += addHttpsServer(relays[i].serverName, relays[i].relay)
+      nginxConf += addHttpsServer(relays[i])
       createDir('../build/dhparam/')
       createDir('../build/certificates/')
+
+      // If certificate doesnt exist creates temporary certificate
       if (!fs.existsSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}`))) {
         createDir(`../build/certificates/${relays[i].serverName}`)
         const certificatePath = path.join(`build/certificates/${relays[i].serverName}`)
@@ -132,16 +142,21 @@ async function main () {
       }
     }
   }
+
+  // Creates DHParam
   const dhparamPath = path.join(__dirname, '../build/dhparam/dhparam-2048.pem')
   if (!fs.existsSync(dhparamPath)) {
     console.log('# Creating DHParam')
     await execProcess('openssl', ['dhparam', '-out', dhparamPath, '2048'])
   }
+
+  // After creating complete config waits for challenge and reloads NGINX
   console.log('# Finished Relays Config')
   createDir('../build/challenge')
   fs.appendFileSync(pathToConfig, nginxConf)
   reloadNginx()
 
+  // Starts certificates checking
   await certificateCheck()
   checkForCertificates.start()
   renewCertificates.start()
