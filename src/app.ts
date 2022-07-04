@@ -7,7 +7,7 @@ import CertbotHelper from './infra/certbot-helper'
 import { execProcess } from './utils/general'
 import { RelayConfig } from './domain/model/relay-config'
 
-const serverConfig = require('../relay-config.json') as ServerConfig
+let currentServerConfig = require('../relay-config.json') as ServerConfig
 const pathToConfig = path.join(__dirname, '../build/conf/default.conf')
 
 function reloadNginx () {
@@ -36,7 +36,39 @@ function addHttpServer (relay: RelayConfig) : String {
     const httpsPass = fs.readFileSync(path.join(__dirname, 'nginx-conf/https-pass.txt'), 'utf8')
     httpText += httpsPass
   } else {
-    httpText +=
+    if (relay.staticServer) {
+      httpText +=
+      ` root /var/www/html/${relay.serverName};
+        index index.html index.htm index.nginx-debian.html;
+
+        location / {
+            # First attempt to serve request as file, then
+            # as directory, then fall back to redirecting to index.html
+            try_files $uri $uri/ /index.html;
+        }
+
+        # # Media: images, icons, video, audio, HTC
+        location ~* \\.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm|htc)$ {
+          expires 1M;
+          access_log off;
+          add_header Cache-Control "public";
+        }
+
+        # # Javascript and CSS files
+        location ~* \\.(?:css|js)$ {
+            try_files $uri =404;
+            expires 1y;
+            access_log off;
+            add_header Cache-Control "public";
+        }
+
+        # # Any route containing a file extension (e.g. /devicesfile.js)
+        location ~ ^.+\\..+$ {
+            try_files $uri =404;
+        }
+      `
+    } else {
+      httpText +=
       ` location / {
           proxy_pass http://${relay.relay.replace('localhost', 'host.docker.internal')};
           proxy_buffering on;
@@ -44,6 +76,7 @@ function addHttpServer (relay: RelayConfig) : String {
           proxy_set_header X-Forwarded-For $remote_addr;
         }
       `
+    }
   }
   httpText += '}\n'
 
@@ -57,15 +90,48 @@ function addHttpsServer (relay: RelayConfig) : String {
         ssl_dhparam /etc/ssl/certs/dhparam-2048.pem;
         ssl_certificate /etc/letsencrypt/live/${relay.serverName}/fullchain.pem;
         ssl_certificate_key /etc/letsencrypt/live/${relay.serverName}/privkey.pem;
+    `
+  if (relay.staticServer) {
+    httpsText +=
+      ` root /var/www/html/${relay.serverName};
+        index index.html index.htm index.nginx-debian.html;
 
         location / {
-                proxy_pass http://${relay.relay.replace('localhost', 'host.docker.internal')}/;
-                proxy_buffering on;
-                proxy_set_header Host            $host;
-                proxy_set_header X-Forwarded-For $remote_addr;
+            # First attempt to serve request as file, then
+            # as directory, then fall back to redirecting to index.html
+            try_files $uri $uri/ /index.html;
         }
-      }\n
-    `
+
+        # # Media: images, icons, video, audio, HTC
+        location ~* \\.(?:jpg|jpeg|gif|png|ico|cur|gz|svg|svgz|mp4|ogg|ogv|webm|htc)$ {
+          expires 1M;
+          access_log off;
+          add_header Cache-Control "public";
+        }
+
+        # # Javascript and CSS files
+        location ~* \\.(?:css|js)$ {
+            try_files $uri =404;
+            expires 1y;
+            access_log off;
+            add_header Cache-Control "public";
+        }
+
+        # # Any route containing a file extension (e.g. /devicesfile.js)
+        location ~ ^.+\\..+$ {
+            try_files $uri =404;
+        }
+      `
+  } else {
+    httpsText +=
+    `location / {
+        proxy_pass http://${relay.relay.replace('localhost', 'host.docker.internal')}/;
+        proxy_buffering on;
+        proxy_set_header Host            $host;
+        proxy_set_header X-Forwarded-For $remote_addr;
+    }`
+  }
+  httpsText += ')\n'
   return httpsText
 }
 
@@ -76,7 +142,7 @@ async function checkForPortUsage (port: number) : Promise<Boolean> {
 
 async function certificateCheck () {
   console.log('# Checking for certificates')
-  const relays = serverConfig.relays
+  const relays = currentServerConfig.relays
   for (let i = 0; i < relays.length; i += 1) {
     if (relays[i].https && fs.existsSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))) {
       console.log(`${relays[i].serverName} - # Relay has temporary certificate`)
@@ -95,31 +161,8 @@ async function certificateCheck () {
   }
 }
 
-const certbot = new CertbotHelper(serverConfig.contactEmail)
-
-const checkForCertificates = cron.schedule('0 * * * * *', async () => {
-  await certificateCheck()
-}, {
-  scheduled: false
-})
-
-const renewCertificates = cron.schedule('0 0 1 * *', async () => {
-  console.log('# Renewing certificates')
-  await certbot.renew(serverConfig.relays)
-  reloadNginx()
-}, {
-  scheduled: false
-})
-
-async function main () {
-  // Creates Base Folders
-  createDir('../build')
-  createDir('../build/conf')
-  createDir('../build/websites')
-
-  // Creates Relays Initial Configuration
-  fs.writeFileSync(pathToConfig, 'server_names_hash_bucket_size  64;\n')
-  let nginxConf = ''
+async function createNginxConfig (serverConfig: ServerConfig) {
+  let nginxConf = 'server_names_hash_bucket_size  64;\n'
   const relays = serverConfig.relays
   console.log('# Creating Relays Config')
   for (let i = 0; i < relays.length; i += 1) {
@@ -153,8 +196,43 @@ async function main () {
   // After creating complete config waits for challenge and reloads NGINX
   console.log('# Finished Relays Config')
   createDir('../build/challenge')
-  fs.appendFileSync(pathToConfig, nginxConf)
+  fs.writeFileSync(pathToConfig, nginxConf)
   reloadNginx()
+}
+
+const certbot = new CertbotHelper(currentServerConfig.contactEmail)
+
+const checkForCertificates = cron.schedule('0 * * * * *', async () => {
+  try {
+    const newServerConfig = require('../relay-config.json') as ServerConfig
+    if (newServerConfig !== currentServerConfig) {
+      currentServerConfig = newServerConfig
+      createNginxConfig(newServerConfig)
+    }
+  } catch (err) {
+    console.log('Error With New Config')
+  }
+  await certificateCheck()
+}, {
+  scheduled: false
+})
+
+const renewCertificates = cron.schedule('0 0 1 * *', async () => {
+  console.log('# Renewing certificates')
+  await certbot.renew(currentServerConfig.relays)
+  reloadNginx()
+}, {
+  scheduled: false
+})
+
+async function main () {
+  // Creates Base Folders
+  createDir('../build')
+  createDir('../build/conf')
+  createDir('../build/websites')
+
+  // Creates Relays Initial Configuration
+  createNginxConfig(currentServerConfig)
 
   // Starts certificates checking
   await certificateCheck()
