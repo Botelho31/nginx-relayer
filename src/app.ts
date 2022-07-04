@@ -6,12 +6,18 @@ import { check } from 'tcp-port-used'
 import CertbotHelper from './infra/certbot-helper'
 import { execProcess, log } from './utils/general'
 import { RelayConfig } from './domain/model/relay-config'
+import lodash from 'lodash'
 
-let currentServerConfig = require('../relay-config.json') as ServerConfig
 const pathToConfig = path.join(__dirname, '../build/conf/default.conf')
+const pathToReload = path.join(__dirname, '../build/conf/reload')
+const pathToRelayConfig = path.join(__dirname, '../relay-config.json')
+if (!fs.existsSync(pathToRelayConfig)) {
+  log('Relay Config Must Exist, terminating program')
+  process.exit()
+}
+let currentServerConfig = JSON.parse(fs.readFileSync(pathToRelayConfig, { encoding: 'utf8' })) as ServerConfig
 
 function reloadNginx () {
-  const pathToReload = path.join(__dirname, '../build/conf/reload')
   if (fs.existsSync(pathToReload)) {
     fs.unlinkSync(pathToReload)
   }
@@ -202,17 +208,22 @@ async function createNginxConfig (serverConfig: ServerConfig) {
 
 const certbot = new CertbotHelper(currentServerConfig.contactEmail)
 
-const checkForCertificates = cron.schedule('0 * * * * *', async () => {
+fs.watch(path.resolve(path.join(__dirname, '/../relay-config.json')), (event, filename) => {
+  log('Relay Config File Changed')
   try {
-    const newServerConfig = require('../relay-config.json') as ServerConfig
-    if (newServerConfig !== currentServerConfig) {
-      log('Updated server config detected')
+    const newServerConfig = JSON.parse(fs.readFileSync(pathToRelayConfig, { encoding: 'utf8' })) as ServerConfig
+    if (!lodash.isEqual(newServerConfig, currentServerConfig)) {
+      log('Updated Server Config Detected')
       currentServerConfig = newServerConfig
       createNginxConfig(newServerConfig)
     }
   } catch (err) {
     log('Error With New Config')
+    console.log(err)
   }
+})
+
+const checkForCertificates = cron.schedule('0 * * * * *', async () => {
   await certificateCheck()
 }, {
   scheduled: false
@@ -232,7 +243,10 @@ async function main () {
   createDir('../build/conf')
   createDir('../build/websites')
 
+  return
+
   // Creates Relays Initial Configuration
+  // eslint-disable-next-line no-unreachable
   createNginxConfig(currentServerConfig)
 
   // Starts certificates checking

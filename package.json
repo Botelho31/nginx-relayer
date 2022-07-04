@@ -25,12 +25,14 @@
     "acme-http-01-webroot": "^3.0.0",
     "dotenv": "^16.0.0",
     "greenlock": "^4.0.4",
+    "lodash": "^4.17.21",
     "moment": "^2.29.3",
     "node-cron": "^3.0.0",
     "tcp-port-used": "^1.0.2",
     "ts-node": "^10.5.0"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.182",
     "@types/node": "^17.0.18",
     "@types/node-cron": "^3.0.1",
     "@types/tcp-port-used": "^1.0.0",
