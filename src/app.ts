@@ -243,10 +243,7 @@ async function main () {
   createDir('../build/conf')
   createDir('../build/websites')
 
-  return
-
   // Creates Relays Initial Configuration
-  // eslint-disable-next-line no-unreachable
   createNginxConfig(currentServerConfig)
 
   // Starts certificates checking
