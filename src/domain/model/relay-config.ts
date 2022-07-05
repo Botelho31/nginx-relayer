@@ -4,4 +4,5 @@ export interface RelayConfig{
   https: boolean
   forceHttps: boolean
   staticServer: boolean
+  staticServerPath?: string
 }

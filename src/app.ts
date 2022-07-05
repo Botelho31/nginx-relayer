@@ -44,7 +44,7 @@ function addHttpServer (relay: RelayConfig) : String {
   } else {
     if (relay.staticServer) {
       httpText +=
-      ` root /var/www/html/${relay.serverName};
+      ` root /var/www/html/${('staticServerPath' in relay) ? relay.staticServerPath : relay.serverName};
         index index.html index.htm index.nginx-debian.html;
 
         location / {
@@ -99,7 +99,7 @@ function addHttpsServer (relay: RelayConfig) : String {
     `
   if (relay.staticServer) {
     httpsText +=
-      ` root /var/www/html/${relay.serverName};
+      ` root /var/www/html/${('staticServerPath' in relay) ? relay.staticServerPath : relay.serverName};
         index index.html index.htm index.nginx-debian.html;
 
         location / {
