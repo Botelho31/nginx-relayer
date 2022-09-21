@@ -147,7 +147,6 @@ async function checkForPortUsage (port: number) : Promise<Boolean> {
 }
 
 async function certificateCheck () {
-  log('Checking for certificates')
   const relays = currentServerConfig.relays
   for (let i = 0; i < relays.length; i += 1) {
     if (relays[i].https && fs.existsSync(path.join(__dirname, `../build/certificates/${relays[i].serverName}/temporary`))) {
